@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+               maximum-scale=1.0, user-scalable=no">
+
+<title>JARVIS</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at center, #12304a 0%, #07111d 45%, #02060a 100%);
+    color: #e8f8ff;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.jarvis {
+    width: 94%;
+    max-width: 500px;
+    text-align: center;
+}
+
+.title {
+    font-size: 42px;
+    letter-spacing: 10px;
+    color: #72dcff;
+    text-shadow:
+        0 0 10px #00bfff,
+        0 0 30px #008cff;
+    margin-bottom: 25px;
+}
+
+.core {
+    width: 170px;
+    height: 170px;
+    margin: 0 auto 30px;
+    border-radius: 50%;
+    border: 3px solid #35d9ff;
+
+    box-shadow:
+        0 0 15px #00cfff,
+        0 0 40px #0077ff,
+        inset 0 0 35px #006d9c;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    animation: pulse 2s infinite;
+}
+
+.core::before {
+    content: "";
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 3px solid #7beaff;
+
+    box-shadow:
+        0 0 20px #00d9ff,
+        inset 0 0 20px #00d9ff;
+}
+
+@keyframes pulse {
+    0%,100% {
+        transform: scale(1);
+        box-shadow:
+            0 0 15px #00cfff,
+            0 0 40px #0077ff;
+    }
+
+    50% {
+        transform: scale(1.06);
+        box-shadow:
+            0 0 30px #00eaff,
+            0 0 70px #008cff;
+    }
+}
+
+.status {
+    min-height: 70px;
+    padding: 18px;
+    border-radius: 15px;
+    background: rgba(0, 20, 35, .7);
+    border: 1px solid #155f7b;
+    box-shadow: 0 0 20px rgba(0,180,255,.15);
+
+    font-size: 18px;
+    line-height: 1.8;
+    margin-bottom: 20px;
+}
+
+button {
+    width: 100%;
+    border: none;
+    border-radius: 15px;
+    padding: 18px;
+    margin-top: 10px;
+
+    background: linear-gradient(135deg,#087ca8,#075277);
+    color: white;
+
+    font-size: 19px;
+    font-weight: bold;
+
+    box-shadow: 0 5px 25px rgba(0,180,255,.25);
+}
+
+button:active {
+    transform: scale(.97);
+}
+
+.small {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #7ca8b8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="jarvis">
+
+    <div class="title">JARVIS</div>
+
+    <div class="core"></div>
+
+    <div id="status" class="status">
+        سیستم آماده است.<br>
+        روی دکمه بزن و صحبت کن.
+    </div>
+
+    <button onclick="startListening()">
+        🎙️ صحبت با JARVIS
+    </button>
+
+    <button onclick="testVoice()">
+        🔊 تست صدا
+    </button>
+
+    <div class="small">
+        Persian Voice Assistant • No API
+    </div>
+
+</div>
+
+<script>
+
+/* =========================
+   وضعیت
+========================= */
+
+const statusBox = document.getElementById("status");
+
+function setStatus(text) {
+    statusBox.innerHTML = text;
+}
+
+
+/* =========================
+   تبدیل متن به گفتار
+========================= */
+
+function speak(text) {
+
+    if (!("speechSynthesis" in window)) {
+        setStatus("❌ مرورگر از تبدیل متن به صدا پشتیبانی نمی‌کند.");
+        return;
+    }
+
+    speechSynthesis.cancel();
+
+    const voice = new SpeechSynthesisUtterance(text);
+
+    voice.lang = "fa-IR";
+    voice.rate = 0.95;
+    voice.pitch = 1;
+    voice.volume = 1;
+
+    speechSynthesis.speak(voice);
+}
+
+
+/* =========================
+   تست صدا
+========================= */
+
+function testVoice() {
+
+    const text = "سلام احمد. جارویس آماده است.";
+
+    setStatus("🔊 در حال تست صدا...");
+
+    speak(text);
+}
+
+
+/* =========================
+   تشخیص گفتار
+========================= */
+
+function startListening() {
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+
+        setStatus(
+            "❌ تشخیص صدای مرورگر در این حالت در دسترس نیست.<br>" +
+            "Chrome را به‌روز کن و صفحه را با HTTPS اجرا کن."
+        );
+
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = "fa-IR";
+
+    recognition.continuous = false;
+
+    recognition.interimResults = false;
+
+    recognition.maxAlternatives = 1;
+
+
+    recognition.onstart = function() {
+
+        setStatus(
+            "🎙️ گوش می‌دم...<br>" +
+            "الان صحبت کن."
+        );
+    };
+
+
+    recognition.onspeechstart = function() {
+
+        setStatus("🎙️ صدات رو گرفتم...");
+    };
+
+
+    recognition.onresult = function(event) {
+
+        const text =
+            event.results[0][0].transcript;
+
+        setStatus(
+            "🗣️ شنیدم:<br>" +
+            text
+        );
+
+        executeCommand(text);
+    };
+
+
+    recognition.onerror = function(event) {
+
+        console.log("Speech error:", event.error);
+
+        if (event.error === "not-allowed") {
+
+            setStatus(
+                "❌ اجازه میکروفون داده نشده.<br>" +
+                "از تنظیمات Chrome اجازه Microphone را فعال کن."
+            );
+
+        } else if (event.error === "no-speech") {
+
+            setStatus(
+                "🔇 چیزی نشنیدم.<br>" +
+                "دوباره دکمه را بزن و واضح صحبت کن."
+            );
+
+        } else if (event.error === "network") {
+
+            setStatus(
+                "🌐 اتصال اینترنت برای تشخیص صدا برقرار نیست."
+            );
+
+        } else {
+
+            setStatus(
+                "❌ خطای تشخیص صدا:<br>" +
+                event.error
+            );
+        }
+    };
+
+
+    recognition.onend = function() {
+
+        console.log("Recognition ended");
+    };
+
+
+    try {
+
+        recognition.start();
+
+    } catch(error) {
+
+        console.log(error);
+
+        setStatus(
+            "⚠️ تشخیص صدا قبلاً فعال شده."
+        );
+    }
+}
+
+
+/* =========================
+   نرمال‌سازی متن
+========================= */
+
+function normalizeText(text) {
+
+    return text
+        .toLowerCase()
+        .replace(/[؟?!،,.]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+
+/* =========================
+   تشخیص هدف کاربر
+========================= */
+
+function detectIntent(command) {
+
+    const text = normalizeText(command);
+
+
+    /* سلام */
+
+    if (
+        text.includes("سلام") ||
+        text.includes("درود") ||
+        text.includes("های جارویس") ||
+        text.includes("هی جارویس") ||
+        text.includes("سلام جارویس")
+    ) {
+
+        return {
+            type: "greeting"
+        };
+    }
+
+
+    /* حال و احوال */
+
+    if (
+        text.includes("خوبی") ||
+        text.includes("حالت چطوره") ||
+        text.includes("چطوری") ||
+        text.includes("چه خبر")
+    ) {
+
+        return {
+            type: "how_are_you"
+        };
+    }
+
+
+    /* تشکر */
+
+    if (
+        text.includes("ممنون") ||
+        text.includes("مرسی") ||
+        text.includes("متشکرم") ||
+        text.includes("دمت گرم")
+    ) {
+
+        return {
+            type: "thanks"
+        };
+    }
+
+
+    /* ساعت */
+
+    if (
+        text.includes("ساعت") ||
+        text.includes("زمان الان") ||
+        text.includes("چه ساعتی")
+    ) {
+
+        return {
+            type: "time"
+        };
+    }
+
+
+    /* =========================
+       سایت‌ها
+    ========================= */
+
+
+    if (
+        text.includes("اینستاگرام") ||
+        text.includes("اینستا") ||
+        text.includes("instagram")
+    ) {
+
+        return {
+            type: "open_site",
+            name: "اینستاگرام",
+            url: "https://www.instagram.com"
+        };
+    }
+
+
+    if (
+        text.includes("یوتیوب") ||
+        text.includes("youtube")
+    ) {
+
+        return {
+            type: "open_site",
+            name: "یوتیوب",
+            url: "https://www.youtube.com"
+        };
+    }
+
+
+    if (
+        text.includes("گوگل") ||
+        text.includes("google")
+    ) {
+
+        return {
+            type: "open_site",
+            name: "گوگل",
+            url: "https://www.google.com"
+        };
+    }
+
+
+    if (
+        text.includes("تلگرام") ||
+        text.includes("telegram")
+    ) {
+
+        return {
+            type: "open_site",
+            name: "تلگرام",
+            url: "https://web.telegram.org"
+        };
+    }
+
+
+    if (
+        text.includes("واتساپ") ||
+        text.includes("واتس اپ") ||
+        text.includes("whatsapp")
+    ) {
+
+        return {
+            type: "open_site",
+            name: "واتساپ",
+            url: "https://web.whatsapp.com"
+        };
+    }
+
+
+    /* =========================
+       جستجو
+    ========================= */
+
+    const searchWords = [
+        "سرچ کن",
+        "سرچ",
+        "جستجو کن",
+        "جستجو",
+        "جست‌وجو کن",
+        "جست‌وجو",
+        "بگرد",
+        "پیدا کن",
+        "درباره",
+        "در مورد"
+    ];
+
+
+    const wantsSearch =
+        searchWords.some(word =>
+            text.includes(word)
+        );
+
+
+    if (wantsSearch) {
+
+        let query = text;
+
+        searchWords.forEach(word => {
+
+            query = query.replaceAll(word, "");
+
+        });
+
+
+        query = query
+            .replaceAll("جارویس", "")
+            .replaceAll("لطفا", "")
+            .replaceAll("لطفاً", "")
+            .replaceAll("برام", "")
+            .replaceAll("برای من", "")
+            .trim();
+
+
+        return {
+            type: "search",
+            query: query
+        };
+    }
+
+
+    /* خداحافظی */
+
+    if (
+        text.includes("خداحافظ") ||
+        text.includes("فعلا") ||
+        text.includes("فعلاً")
+    ) {
+
+        return {
+            type: "goodbye"
+        };
+    }
+
+
+    return {
+        type: "unknown",
+        original: text
+    };
+}
+
+
+/* =========================
+   اجرای فرمان
+========================= */
+
+function executeCommand(command) {
+
+    const intent = detectIntent(command);
+
+
+    switch (intent.type) {
+
+
+        case "greeting":
+
+            const greetings = [
+                "سلام احمد، جارویس آماده است.",
+                "سلام احمد، در خدمتم.",
+                "سلام! سیستم آنلاین است."
+            ];
+
+            const greeting =
+                greetings[
+                    Math.floor(
+                        Math.random() *
+                        greetings.length
+                    )
+                ];
+
+            setStatus("🤖 " + greeting);
+
+            speak(greeting);
+
+            break;
+
+
+        case "how_are_you":
+
+            const response =
+                "ممنون، سیستم‌ها پایدار هستند و آماده‌ام.";
+
+            setStatus("🤖 " + response);
+
+            speak(response);
+
+            break;
+
+
+        case "thanks":
+
+            const thanks =
+                "خواهش می‌کنم احمد.";
+
+            setStatus("🤖 " + thanks);
+
+            speak(thanks);
+
+            break;
+
+
+        case "time":
+
+            const now = new Date();
+
+            const time =
+                now.toLocaleTimeString(
+                    "fa-IR",
+                    {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }
+                );
+
+            const timeText =
+                "الان ساعت " + time + " است.";
+
+            setStatus("🕐 " + timeText);
+
+            speak(timeText);
+
+            break;
+
+
+        case "open_site":
+
+            setStatus(
+                "🌐 در حال باز کردن " +
+                intent.name +
+                "..."
+            );
+
+            speak(
+                "در حال باز کردن " +
+                intent.name
+            );
+
+            setTimeout(() => {
+
+                window.open(
+                    intent.url,
+                    "_blank"
+                );
+
+            }, 500);
+
+            break;
+
+
+        case "search":
+
+            if (!intent.query) {
+
+                setStatus(
+                    "🔎 چی رو جستجو کنم؟"
+                );
+
+                speak(
+                    "چی رو جستجو کنم؟"
+                );
+
+                return;
+            }
+
+
+            const searchText =
+                "دارم درباره " +
+                intent.query +
+                " جستجو می‌کنم.";
+
+            setStatus(
+                "🔎 " + searchText
+            );
+
+            speak(searchText);
+
+
+            setTimeout(() => {
+
+                const url =
+                    "https://www.google.com/search?q=" +
+                    encodeURIComponent(
+                        intent.query
+                    );
+
+                window.open(
+                    url,
+                    "_blank"
+                );
+
+            }, 700);
+
+            break;
+
+
+        case "goodbye":
+
+            const bye =
+                "فعلاً احمد.";
+
+            setStatus("👋 " + bye);
+
+            speak(bye);
+
+            break;
+
+
+        default:
+
+            const unknown =
+                "منظورت رو متوجه نشدم. می‌تونی بگی چی کار کنم؟";
+
+            setStatus(
+                "❓ " + unknown
+            );
+
+            speak(unknown);
+
+            break;
+    }
+}
+
+</script>
+
+</body>
+</html>
